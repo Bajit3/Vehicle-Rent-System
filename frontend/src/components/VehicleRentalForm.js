@@ -10,6 +10,7 @@ import Step2Wheels from './steps/Step2Wheels';
 import Step3Type from './steps/Step3Type';
 import Step4Model from './steps/Step4Model';
 import Step5DateRange from './steps/Step5DateRange';
+import bookingClient from '../apiClient/bookingClient';
 
 const steps = [Step1Name, Step2Wheels, Step3Type, Step4Model, Step5DateRange];
 
@@ -28,7 +29,6 @@ const VehicleRentalForm = () => {
   },
 });
 
-
   const mutation = useMutation({
   mutationFn: async (data) => {
     const payload = {
@@ -39,7 +39,7 @@ const VehicleRentalForm = () => {
       endDate: data.endDate,
     };
 
-    const res = await api.post('/bookings', payload);
+    const res = await bookingClient.bookVehicle(payload);
     return res.data;
   },
   onSuccess: () => {

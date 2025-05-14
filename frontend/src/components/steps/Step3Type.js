@@ -8,6 +8,7 @@ import {
   RadioGroup,
   Radio,
 } from '@mui/material';
+import getClient from '../../apiClient/getClient';
 
 const Step3Type = () => {
   const {
@@ -21,12 +22,12 @@ const Step3Type = () => {
   const { data, isLoading } = useQuery({
     queryKey: ['vehicle-types', wheels],
     queryFn: async () => {
-      const res = await api.get(`/vehicles/types?wheels=${wheels}`);
+      const res = await getClient.getVehicleByWheels(wheels);
       return res.data;
     },
     enabled: wheels == 2 || wheels == 4,
   });
-  console.log("data",data)
+  
 
   return (
     <FormControl error={!!errors.typeId}>

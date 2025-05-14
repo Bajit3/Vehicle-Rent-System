@@ -8,6 +8,7 @@ import {
   RadioGroup,
   Radio,
 } from '@mui/material';
+import getClient from '../../apiClient/getClient';
 
 const Step4Model = () => {
   const { register, control, formState: { errors } } = useFormContext();
@@ -16,7 +17,7 @@ const Step4Model = () => {
   const { data, isLoading } = useQuery({
     queryKey: ['models', typeId],
     queryFn: async () => {
-      const res = await api.get(`/vehicles/${typeId}`);
+      const res = await getClient.getVehicleById(typeId);
       return res.data;
     },
     enabled: !!typeId,
