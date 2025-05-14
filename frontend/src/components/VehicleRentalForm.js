@@ -1,92 +1,146 @@
-import React, { useState } from 'react';
-import { useForm, FormProvider } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
-import { Button } from '@mui/material';
-import api from '../apiClient/api'
-import { bookingSchema } from '../schemas/bookingSchema';
-import Step1Name from './steps/Step1Name';
-import Step2Wheels from './steps/Step2Wheels';
-import Step3Type from './steps/Step3Type';
-import Step4Model from './steps/Step4Model';
-import Step5DateRange from './steps/Step5DateRange';
-import bookingClient from '../apiClient/bookingClient';
+import React, { useState } from "react";
+import { useForm, FormProvider } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
+import {
+  Button,
+  Stepper,
+  Step,
+  StepLabel,
+  Box,
+  Typography,
+  Paper,
+  CircularProgress,
+} from "@mui/material";
+import { bookingSchema } from "../schemas/bookingSchema";
+import Step1Name from "./steps/Step1Name";
+import Step2Wheels from "./steps/Step2Wheels";
+import Step3Type from "./steps/Step3Type";
+import Step4Model from "./steps/Step4Model";
+import Step5DateRange from "./steps/Step5DateRange";
+import bookingClient from "../apiClient/bookingClient";
+import toast from "react-hot-toast";
 
-const steps = [Step1Name, Step2Wheels, Step3Type, Step4Model, Step5DateRange];
+const steps = [
+  { label: "Personal Info", component: Step1Name },
+  { label: "Wheels", component: Step2Wheels },
+  { label: "Vehicle Type", component: Step3Type },
+  { label: "Model", component: Step4Model },
+  { label: "Date Range", component: Step5DateRange },
+];
 
 const VehicleRentalForm = () => {
-  const [step, setStep] = useState(0);
- const methods = useForm({
-  resolver: zodResolver(bookingSchema),
-  defaultValues: {
-    firstName: '',
-    lastName: '',
-    wheels: null,
-    typeId: '',
-    vehicleId: '',
-    startDate: null,
-    endDate: null,
-  },
-});
+  const [activeStep, setActiveStep] = useState(0);
+
+  const methods = useForm({
+    resolver: zodResolver(bookingSchema),
+    mode: "onTouched",
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      wheels: null,
+      typeId: "",
+      vehicleId: "",
+      startDate: null,
+      endDate: null,
+    },
+  });
+  
 
   const mutation = useMutation({
-  mutationFn: async (data) => {
-    const payload = {
-      firstName: data.firstName,
-      lastName: data.lastName,
-      vehicleId: data.vehicleId,
-      startDate: data.startDate,
-      endDate: data.endDate,
-    };
+    mutationFn: async (data) => {
+      const payload = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        vehicleId: data.vehicleId,
+        startDate: data.startDate,
+        endDate: data.endDate,
+      };
+      const res = await bookingClient.bookVehicle(payload);
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success("Booking successful!");
+      methods.reset();
+      setActiveStep(0);
+    },
+    onError: (err) => {
+      toast.error(err.response.data.error);
+    },
+  });
 
-    const res = await bookingClient.bookVehicle(payload);
-    return res.data;
-  },
-  onSuccess: () => {
-    alert('Booking successful!');
-    methods.reset();
-    setStep(0);
-  },
-  onError: (err) => {
-    alert(err?.response?.data?.message || 'Booking failed');
-  },
-});
+  const CurrentStep = steps[activeStep].component;
+  const isLastStep = activeStep === steps.length - 1;
 
+  const handleNext = async () => {
+    const stepFields = [
+      ["firstName", "lastName"],
+      ["wheels"],
+      ["typeId"],
+      ["vehicleId"],
+      ["startDate", "endDate"],
+    ];
 
-  const CurrentStep = steps[step];
-  const isLast = step === steps.length - 1;
-
-  const onNext = async () => {
-  const stepFields = [
-    ['firstName', 'lastName'],
-    ['wheels'],
-    ['typeId'],
-    ['vehicleId'],
-    ['startDate', 'endDate'],
-  ];
-
-  const isValid = await methods.trigger(stepFields[step]);
-
-  if (isValid) setStep((prev) => prev + 1);
-};
-
-  const onBack = () => setStep((prev) => prev - 1);
+    const isValid = await methods.trigger(stepFields[activeStep]);
+    if (isValid) setActiveStep((prev) => prev + 1);
+  };
 
   const onSubmit = methods.handleSubmit((data) => mutation.mutate(data));
 
   return (
     <FormProvider {...methods}>
-      <form onSubmit={onSubmit} className="max-w-xl mx-auto p-6 border rounded space-y-6">
-        <CurrentStep />
-        <div className="flex justify-between pt-4">
-          {step > 0 && <Button onClick={onBack}>Back</Button>}
-          {isLast ? (
-            <Button type="submit" variant="contained">Submit</Button>
-          ) : (
-            <Button variant="contained" onClick={onNext}>Next</Button>
-          )}
-        </div>
-      </form>
+      <Box sx={{ maxWidth: 800, mx: "auto", my: 4 }}>
+        <Paper elevation={3} sx={{ p: 4 }}>
+          <Typography
+            variant="h4"
+            component="h1"
+            gutterBottom
+            align="center"
+            sx={{ mb: 4 }}
+          >
+            Vehicle Rental
+          </Typography>
+
+          <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 4 }}>
+            {steps.map((step) => (
+              <Step key={step.label}>
+                <StepLabel>{step.label}</StepLabel>
+              </Step>
+            ))}
+          </Stepper>
+
+          <Box component="form" onSubmit={onSubmit}>
+            <CurrentStep />
+
+            <Box
+              sx={{ display: "flex", justifyContent: "space-between", pt: 4 }}
+            >
+              {isLastStep ? (
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  disabled={mutation.isPending}
+                >
+                  {mutation.isPending ? (
+                    <CircularProgress size={24} />
+                  ) : (
+                    "Submit Booking"
+                  )}
+                </Button>
+              ) : (
+                <Button
+                  variant="contained"
+                  onClick={handleNext}
+                  color="primary"
+                >
+                  Next
+                </Button>
+              )}
+            </Box>
+          </Box>
+        </Paper>
+      </Box>
     </FormProvider>
   );
 };

@@ -1,22 +1,19 @@
 import { useFormContext, useWatch } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
-import api from '../../apiClient/api';
 import {
   FormControl,
   FormLabel,
   FormControlLabel,
   RadioGroup,
   Radio,
+  Typography,
+  Box,
+  CircularProgress
 } from '@mui/material';
 import getClient from '../../apiClient/getClient';
 
 const Step3Type = () => {
-  const {
-    register,
-    control,
-    formState: { errors },
-  } = useFormContext();
-
+  const { register, control, formState: { errors } } = useFormContext();
   const wheels = useWatch({ control, name: 'wheels' });
   
   const { data, isLoading } = useQuery({
@@ -27,30 +24,39 @@ const Step3Type = () => {
     },
     enabled: wheels == 2 || wheels == 4,
   });
-  
 
   return (
-    <FormControl error={!!errors.typeId}>
-      <FormLabel>Vehicle Type</FormLabel>
-      <RadioGroup>
-        {isLoading ? (
-          <p>Loading...</p>
-        ) : data?.length > 0 ? (
-          data.map((type) => (
-            <FormControlLabel
-              key={type.id}
-              value={type.id}
-              control={<Radio />}
-              label={type.name}
-              {...register('typeId')}
-            />
-          ))
-        ) : (
-          <p className="text-sm text-gray-500">No vehicle types found.</p>
+    <Box sx={{ mt: 2 }}>
+      <FormControl error={!!errors.typeId} fullWidth>
+        <FormLabel sx={{ mb: 2, fontWeight: 'bold' }}>Vehicle Type</FormLabel>
+        <RadioGroup>
+          {isLoading ? (
+            <Box display="flex" justifyContent="center">
+              <CircularProgress size={24} />
+            </Box>
+          ) : data?.length > 0 ? (
+            data.map((type) => (
+              <FormControlLabel
+                key={type.id}
+                value={type.id}
+                control={<Radio />}
+                label={type.name}
+                {...register('typeId', { required: 'Please select a vehicle type' })}
+              />
+            ))
+          ) : (
+            <Typography variant="body2" color="textSecondary">
+              No vehicle types available for {wheels} wheels.
+            </Typography>
+          )}
+        </RadioGroup>
+        {errors.typeId && (
+          <Typography color="error" variant="body2" sx={{ mt: 1 }}>
+            {errors.typeId.message}
+          </Typography>
         )}
-      </RadioGroup>
-      <p className="text-red-500 text-sm">{errors.typeId?.message}</p>
-    </FormControl>
+      </FormControl>
+    </Box>
   );
 };
 

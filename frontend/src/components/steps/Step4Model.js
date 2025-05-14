@@ -1,12 +1,14 @@
 import { useFormContext, useWatch } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
-import api from '../../apiClient/api';
 import {
   FormControl,
   FormLabel,
   FormControlLabel,
   RadioGroup,
   Radio,
+  Typography,
+  Box,
+  CircularProgress
 } from '@mui/material';
 import getClient from '../../apiClient/getClient';
 
@@ -24,25 +26,37 @@ const Step4Model = () => {
   });
 
   return (
-    <FormControl error={!!errors.vehicleId}>
-      <FormLabel>Select Model</FormLabel>
-      <RadioGroup>
-        {isLoading ? (
-          <p>Loading...</p>
-        ) : (
-          data?.map((v) => (
-            <FormControlLabel
-              key={v.id}
-              value={v.id}
-              control={<Radio />}
-              label={v.name}
-              {...register('vehicleId')}
-            />
-          ))
+    <Box sx={{ mt: 2 }}>
+      <FormControl error={!!errors.vehicleId} fullWidth>
+        <FormLabel sx={{ mb: 2, fontWeight: 'bold' }}>Select Model</FormLabel>
+        <RadioGroup>
+          {isLoading ? (
+            <Box display="flex" justifyContent="center">
+              <CircularProgress size={24} />
+            </Box>
+          ) : data?.length > 0 ? (
+            data.map((v) => (
+              <FormControlLabel
+                key={v.id}
+                value={v.id}
+                control={<Radio />}
+                label={v.name}
+                {...register('vehicleId', { required: 'Please select a model' })}
+              />
+            ))
+          ) : (
+            <Typography variant="body2" color="textSecondary">
+              No models available for this vehicle type.
+            </Typography>
+          )}
+        </RadioGroup>
+        {errors.vehicleId && (
+          <Typography color="error" variant="body2" sx={{ mt: 1 }}>
+            {errors.vehicleId.message}
+          </Typography>
         )}
-      </RadioGroup>
-      <p className="text-red-500 text-sm">{errors.vehicleId?.message}</p>
-    </FormControl>
+      </FormControl>
+    </Box>
   );
 };
 
